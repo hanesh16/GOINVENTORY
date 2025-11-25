@@ -3,24 +3,36 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"goinventory/api"
 	"log"
+	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	// Replace DSN with ones own credentials
-	dsn := ""
 
-	db, err := sql.Open("mysql", dsn)
+	dataSourceName := "root:Honey@007@tcp(127.0.0.1:3306)/inventorydb?parseTime=true"
+
+	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
-		log.Fatal("DB open error:", err)
+		log.Fatal("Error opening database:", err)
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
-		log.Fatal("DB ping error:", err)
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Error connecting to database:", err)
 	}
 
 	fmt.Println("Connected to MySQL (inventorydb)")
+
+	mux := http.NewServeMux()
+	api.RegisterRoutes(mux, db, nil)
+
+	fmt.Println("Server running on http://localhost:8080")
+	err = http.ListenAndServe(":8080", mux)
+	if err != nil {
+		log.Fatal("server error:", err)
+	}
 }
