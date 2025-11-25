@@ -33,6 +33,32 @@ func GetProduct(db *sql.DB, id int) (model.Product, error) {
 	return product, err
 }
 
+// Update Stock
+func UpdateStock(db *sql.DB, id int, change int) (int, int, error) {
+	var oldStock int
+
+	selectQuery := `SELECT stock FROM products WHERE id = ?`
+	row := db.QueryRow(selectQuery, id)
+
+	err := row.Scan(&oldStock)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	newStock := oldStock + change
+	if newStock < 0 {
+		newStock = 0
+	}
+
+	updateQuery := `UPDATE products SET stock = ? WHERE id = ?`
+	_, err = db.Exec(updateQuery, newStock, id)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return oldStock, newStock, nil
+}
+
 // List Products
 func ListProducts(db *sql.DB, search string) ([]model.Product, error) {
 	var rows *sql.Rows
